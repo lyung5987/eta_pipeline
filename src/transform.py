@@ -43,4 +43,7 @@ def transform(path = data_path):
 
 
 if __name__ == "__main__":
-    print(transform())
+    df = transform()
+    Path("data/processed").mkdir(parents=True, exist_ok=True)
+    df.to_csv("data/processed/eta_flat.csv", index=False, encoding="utf-8-sig")
+    print(df.shape)
