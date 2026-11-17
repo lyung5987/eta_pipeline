@@ -21,11 +21,11 @@ def get_json(path, retries=3, timeout=10):
 
 def save_raw(name, payload):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    Path("data/raw").mkdir(parents=True, exist_ok=True)
+    Path("data/raw/").mkdir(parents=True, exist_ok=True)
     with open(f"data/raw/{name}_{ts}.json", "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
 
-def fetch_eta(route_id, route_seq, stop_seq, stop_id):
+def fetch_eta(route_id, route_seq, stop_seq, stop_id, name_en, name_tc, name_sc):
     payload = get_json(f"/eta/route-stop/{route_id}/{route_seq}/{stop_seq}")
     if payload is None:
         print(f"FAILED: {route_id} seq{route_seq} stop{stop_seq}")
@@ -34,6 +34,7 @@ def fetch_eta(route_id, route_seq, stop_seq, stop_id):
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "route_id": route_id, "route_seq": route_seq,
         "stop_seq": stop_seq, "stop_id": stop_id,
+        "stop_name_en": name_en, "stop_name_tc": name_tc, "stop_name_sc": name_sc,
         "response": payload,
     }
 
@@ -45,7 +46,7 @@ def run():
             print(f"No stop list for direction {route_seq}")
             continue
         for s in stops["data"]["route_stops"]:
-            rec = fetch_eta(TARGET_ROUTE_ID, route_seq, s["stop_seq"], s["stop_id"])
+            rec = fetch_eta(TARGET_ROUTE_ID, route_seq, s["stop_seq"], s["stop_id"], s.get("name_en"), s.get("name_tc"), s.get("name_sc"))
             if rec is not None:
                 records.append(rec)
             time.sleep(0.5)

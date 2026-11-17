@@ -4,6 +4,8 @@ from pathlib import Path
 
 def latest_raw(folder="data/raw"):
     files = sorted(Path(folder).glob("eta_run_*.json"))
+    if not files:
+        raise FileNotFoundError(f"No eta_run_*.json files in {folder}")
     return files[-1]
 
 data_path = latest_raw()
@@ -25,6 +27,9 @@ def flatten(records):
             "stop_seq": rec["stop_seq"],
             "stop_id": rec["stop_id"],
             "enabled": data["enabled"],
+            "stop_name_en": rec.get("stop_name_en"),
+            "stop_name_tc": rec.get("stop_name_tc"),
+            "stop_name_sc": rec.get("stop_name_sc"),
         }
         etas = data.get("eta", [])
         if not etas:
@@ -34,11 +39,18 @@ def flatten(records):
                 rows.append({**base, "status": "ok", **e})
     return pd.DataFrame(rows)
 
-def transform(path = data_path):
+def transform(path = None):
+    if path is None:
+        path = latest_raw
     df = flatten(load_raw(path))
-    if "diff" in df.columns:
-        df["fetched_at"] = pd.to_datetime(df["fetched_at"], utc=True).dt.tz_convert("Asia/Hong_Kong")
-        df["generated_at"] = pd.to_datetime(df["generated_at"], utc=True).dt.tz_convert("Asia/Hong_Kong")
+    df["fetched_at"] = pd.to_datetime(df["fetched_at"], utc=True).dt.tz_convert("Asia/Hong_Kong")
+    df["generated_at"] = pd.to_datetime(df["generated_at"], utc=True).dt.tz_convert("Asia/Hong_Kong")
+    if "timestamp" in df.columns:
+        df = df.rename(columns={"timestamp": "eta_timestamp"})
+        df["eta_timestamp"] = pd.to_datetime(df["eta_timestamp"], utc=True).dt.tz_convert("Asia/Hong_Kong")
+    if "remarks_en" in df.columns:
+        df["is_scheduled"] = (df["remarks_en"] == "Scheduled").astype(int)
+        df["is_delayed"] = (df["remarks_en"] == "Delayed").astype(int)
     return df
 
 
