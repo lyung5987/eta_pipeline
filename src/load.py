@@ -1,8 +1,8 @@
 import sqlite3
 from pathlib import Path
 import pandas as pd
+from config import DB_PATH
 
-DB_PATH = "data/eta.db"
 
 def get_conn(db_path=DB_PATH):
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)

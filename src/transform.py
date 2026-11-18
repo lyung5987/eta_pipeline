@@ -1,14 +1,14 @@
 import json
 import pandas as pd
 from pathlib import Path
+from config import RAW_DIR, ROOT
 
-def latest_raw(folder="data/raw"):
+def latest_raw(folder=RAW_DIR):
     files = sorted(Path(folder).glob("eta_run_*.json"))
     if not files:
         raise FileNotFoundError(f"No eta_run_*.json files in {folder}")
     return files[-1]
 
-data_path = latest_raw()
 
 def load_raw(path):
     with open(path, encoding="utf-8") as f: #utf-8 preserve chinese chars
@@ -41,7 +41,7 @@ def flatten(records):
 
 def transform(path = None):
     if path is None:
-        path = latest_raw
+        path = latest_raw()
     df = flatten(load_raw(path))
     df["fetched_at"] = pd.to_datetime(df["fetched_at"], utc=True).dt.tz_convert("Asia/Hong_Kong")
     df["generated_at"] = pd.to_datetime(df["generated_at"], utc=True).dt.tz_convert("Asia/Hong_Kong")
@@ -57,5 +57,5 @@ def transform(path = None):
 if __name__ == "__main__":
     df = transform()
     Path("data/processed").mkdir(parents=True, exist_ok=True)
-    df.to_csv("data/processed/eta_flat.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(f"{ROOT}/data/processed/eta_flat.csv", index=False, encoding="utf-8-sig")
     print(df.shape)

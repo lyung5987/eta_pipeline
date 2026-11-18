@@ -3,6 +3,7 @@ import time
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from config import RAW_DIR
 
 BASE_URL = "https://data.etagmb.gov.hk"
 TARGET_ROUTE_ID = 2004825  # 11M
@@ -21,8 +22,8 @@ def get_json(path, retries=3, timeout=10):
 
 def save_raw(name, payload):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    Path("data/raw/").mkdir(parents=True, exist_ok=True)
-    with open(f"data/raw/{name}_{ts}.json", "w", encoding="utf-8") as f:
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    with open(RAW_DIR / f"{name}_{ts}.json", "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
 
 def fetch_eta(route_id, route_seq, stop_seq, stop_id, name_en, name_tc, name_sc):
