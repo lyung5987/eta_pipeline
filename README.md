@@ -3,12 +3,12 @@
 An end-to-end ETL pipeline that collects real-time arrival estimation (ETA) data for Hong Kong green minibus route **11M** (Tseung Kwan O area), validates and stores it in SQLite, and publishes a KPI dashboard on Tableau Public.
 
 **Live dashboard:** [https://public.tableau.com:9443/views/Minibus11METAPipeline/Dashboard1?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link]
-**Data as of:** [20/11/2026] | **Collected:** 371 pipeline runs, 10507 ETA rows over 7 days
+**Data as of:** [24/11/2026] | **Collected:** 371 pipeline runs, 10507 ETA rows over 7 days
 
 
 ## Why this project
 
-Being one of the students who relies on 11M transportation to go to HKUST, the minibus arrival time often felt unreliable and fluctuating. Hence the motivation for collecting data to analyse the estimated time of arrival and the average wait time during the day.
+Being one of the students who relies on 11M transportation to go to HKUST, the minibus arrival time often felt unreliable and fluctuating. Hence the motivation for collecting data to analyse the estimated time of arrival and the average wait time to try to understand how the minibus line behave generally.
 Real-time ETA data can't be re-fetched once the moment has passed, so the pipeline has to collect it reliably over time. This project covers the full data workflow: extract from a public API, clean and transform, validate, load into a database with idempotent writes, schedule the collection, and report KPIs through a dashboard.
 
 ## Data flow
@@ -34,7 +34,7 @@ flowchart LR
 - Transport Department, "Real-time arrival data of green minibuses (GMBs)" on [data.gov.hk](https://data.gov.hk).
 - API base URL: `https://data.etagmb.gov.hk` ([specification](https://data.etagmb.gov.hk/static/GMB_ETA_API_Specification.pdf)).
 - Target: route 11M (`route_id` 2004825), both directions (3 stops in direction 1, 7 in direction 2).
-- ETA updates about once a minute, with up to 3 upcoming buses per stop. A `remarks_en` value of "Scheduled" means a timetable estimate, "Delayed" means traffic delay, and blank means a live GPS estimate.
+- ETA updates about once a minute, with up to 3 upcoming minibuses per stop. A `remarks_en` value of "Scheduled" means a timetable estimate, "Delayed" means traffic delay, and blank means a live GPS estimate.
 
 ## Repository layout
 
