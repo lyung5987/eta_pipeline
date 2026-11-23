@@ -2,13 +2,13 @@
 
 An end-to-end ETL pipeline that collects real-time arrival estimation (ETA) data for Hong Kong green minibus route **11M** (Tseung Kwan O area), validates and stores it in SQLite, and publishes a KPI dashboard on Tableau Public.
 
-**Live dashboard:** [https://public.tableau.com:9443/views/Minibus11METAPipeline/Dashboard1?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link]
-**Data as of:** [24/11/2026] | **Collected:** 371 pipeline runs, 10507 ETA rows over 7 days
+**Live dashboard:** (https://public.tableau.com/views/Minibus11METAPipeline/Dashboard1)
+**Data as of:** 2026-11-24 | **Collected:** 371 pipeline runs, 10,507 ETA rows over 7 days
 
 
 ## Why this project
 
-Being one of the students who relies on 11M transportation to go to HKUST, the minibus arrival time often felt unreliable and fluctuating. Hence the motivation for collecting data to analyse the estimated time of arrival and the average wait time to try to understand how the minibus line behave generally.
+How long do passengers wait for 11M at different times of the day? A single ride tells you little about typical wait times, so I collected ETA data over time to measure how waits vary by hour and stop.
 Real-time ETA data can't be re-fetched once the moment has passed, so the pipeline has to collect it reliably over time. This project covers the full data workflow: extract from a public API, clean and transform, validate, load into a database with idempotent writes, schedule the collection, and report KPIs through a dashboard.
 
 ## Data flow
@@ -56,9 +56,9 @@ environment.yml
 
 | Table | Purpose | Key |
 |---|---|---|
-| `fact_eta` | One row per ETA entry (or one `no_eta` row per poll) | UNIQUE (route_id, route_seq, stop_seq, fetched_at, eta_seq) |
+| `fact_eta` | One row per ETA entry (or one `no_eta` row per stop per poll) | UNIQUE (route_id, route_seq, stop_seq, fetched_at, eta_seq) |
 | `dim_stop` | Stop names (EN/TC/SC) per route, direction and stop sequence | PK (route_id, route_seq, stop_seq) |
-| `validation_log` | Result of every data-quality check per loaded file | none |
+| `validation_log` | Result of every critically passed data-quality check per loaded file | none |
 | `processed_files` | Raw files already loaded | PK filename |
 
 Design notes:
@@ -83,13 +83,12 @@ A critical failure stops the load and exits with a non-zero code. Every result i
 ## KPIs (dashboard)
 
 - Average wait by hour of day
-- Share of live vs scheduled vs delayed estimates
 - No-service share by hour
 - Average wait by stop and direction
 - Data freshness (last fetch, total rows, runs loaded)
 - Validation pass rate per check
 
-Caveat: average wait mixes live GPS estimates with timetable estimates, so read it together with the live/scheduled share. Hours with few observations are noisy.
+Caveat: some average wait times are timetable estimates.
 
 ## Setup
 
@@ -103,7 +102,7 @@ Run one full cycle from the project root:
 ```bash
 python src/run_pipeline.py
 ```
-
+The first run creates data/ and the SQLite database.
 Refresh the dashboard data:
 
 ```bash
@@ -117,16 +116,22 @@ Then refresh the data sources in Tableau Public Desktop and re-publish.
 - Program: full path to the environment's `python.exe`
 - Arguments: `src\run_pipeline.py`
 - Start in: the project root folder
-- Trigger: daily from 07:00, repeat every 10 minutes
+- Trigger: daily from 06:00, repeat every 10 minutes until 24:00
 - Settings: do not start a new instance if already running
 
 
 ## Limitations
 
-- Collection runs on a personal laptop, so runs can be missed when it sleeps or is offline. Gaps are visible in the data.
+- Collection runs on a personal laptop, so runs can be missed when it sleeps or is offline. Gaps are visible in the data, that is roughly 60% of the theoretical amount of data were collected during the day.
 - The dashboard is a snapshot published to Tableau Public and is refreshed manually.
 - Only one route is collected. The code is parameterised by `TARGET_ROUTE_ID`, so adding routes is a small change.
 - Test coverage is not yet in place. Data quality is enforced at runtime by the validation checks.
+
+## Findings
+
+- Hours with the longest average wait is 06:00 and 23:00 with average wait time of 20.6 and 13.1 minutes respectively.
+- Service hours spans from 06:00 to 24:00.
+- Stations with the longest average wait time is Hong Kong University of Science and Technology (North Station) for direction 1, and Hang Hau Station Public Transport Interchange for direction 2, the last stop of both routes respectively.
 
 ## Possible next steps
 
@@ -137,4 +142,14 @@ Then refresh the data sources in Tableau Public Desktop and re-publish.
 
 ## Data and licence
 
-Source data is provided by the Hong Kong Transport Department via data.gov.hk. Check the dataset's terms of use before redistributing data.
+**Code:** [MIT License](LICENSE).
+
+**Data:** Real-time arrival data of green minibuses (GMBs), provided by the
+Transport Department of the Hong Kong SAR Government via
+[DATA.GOV.HK](https://data.gov.hk/en-data/dataset/hk-td-sm_7-real-time-arrival-data-of-gmb).
+The data is free to re-use under the
+[DATA.GOV.HK Terms and Conditions of Use](https://data.gov.hk/en/terms-and-conditions),
+which require clear attribution of the source. The Government and the
+relevant organisations own the intellectual property in the data, and the
+data is provided "as is". This repository does not claim ownership of the
+data. The MIT licence applies to the code only.
