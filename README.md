@@ -58,7 +58,7 @@ environment.yml
 |---|---|---|
 | `fact_eta` | One row per ETA entry (or one `no_eta` row per stop per poll) | UNIQUE (route_id, route_seq, stop_seq, fetched_at, eta_seq) |
 | `dim_stop` | Stop names (EN/TC/SC) per route, direction and stop sequence | PK (route_id, route_seq, stop_seq) |
-| `validation_log` | Result of every critically passed data-quality check per loaded file | none |
+| `validation_log` | Result of every data-quality check that passed the critical tests per loaded file | none |
 | `processed_files` | Raw files already loaded | PK filename |
 
 Design notes:
